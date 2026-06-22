@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boka 特務：尋找消失的分數 | 互動英語遊戲</title>
+    <!-- Tailwind CSS for stunning styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for cool agent icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter and Fredoka for a friendly game vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .agent-gradient {
+            background: radial-gradient(circle at top, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse-boka {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+        /* Custom slide/fade animations */
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="agent-gradient text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-cyan-200 selection:text-slate-900">
+
+    <!-- Sound toggles and Header -->
+    <header class="w-full max-w-4xl mx-auto px-4 pt-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-cyan-500 text-white p-2.5 rounded-xl font-bold flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-user-secret text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-extrabold tracking-wide text-cyan-600">AGENT BOKA</h1>
+                <p class="text-xs text-slate-500">秘密分數解碼任務</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle Buttons -->
+            <button id="tts-toggle" onclick="toggleSpeech()" class="p-2 bg-white hover:bg-slate-50 transition text-slate-600 hover:text-slate-900 rounded-xl flex items-center gap-1.5 border border-slate-200 text-xs md:text-sm shadow-sm">
+                <i id="tts-icon" class="fa-solid fa-volume-high text-cyan-600"></i>
+                <span class="hidden sm:inline font-semibold">英語語音</span>
+            </button>
+            <button id="sfx-toggle" onclick="toggleSfx()" class="p-2 bg-white hover:bg-slate-50 transition text-slate-600 hover:text-slate-900 rounded-xl flex items-center gap-1.5 border border-slate-200 text-xs md:text-sm shadow-sm">
+                <i id="sfx-icon" class="fa-solid fa-bell text-emerald-600"></i>
+                <span class="hidden sm:inline font-semibold">遊戲音效</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="flex-grow w-full max-w-4xl mx-auto px-4 py-6 flex flex-col justify-center items-center">
+        <div id="game-container" class="w-full glass-panel rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden transition-all duration-500 min-h-[550px] flex flex-col justify-between">
+            
+            <!-- Progress Bar Tracker -->
+            <div id="progress-header" class="hidden w-full flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-slate-100 pb-4 gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-cyan-600 whitespace-nowrap">任務進度</span>
+                    <div class="flex flex-wrap gap-2" id="progress-dots">
+                        <!-- Filled dynamically by JavaScript -->
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-sm bg-white px-3 py-1 self-start md:self-auto rounded-full border border-slate-200 text-slate-600 shadow-sm">
+                    <i class="fa-solid fa-star text-amber-500"></i>
+                    <span>積分: <strong id="score-display" class="text-slate-800 font-extrabold text-base">0</strong></span>
+                </div>
+            </div>
+
+            <!-- DYNAMIC SCREEN CONTAINER -->
+            <div id="game-screen" class="flex-grow flex flex-col items-center justify-center">
+                <!-- LEVEL 0: INTRO SCREEN -->
+                <div id="screen-intro" class="w-full flex flex-col items-center text-center animate-fade-in">
+                    <!-- Boka Hero SVG -->
+                    <div class="w-48 h-48 md:w-56 md:h-56 mb-6 pulse-boka drop-shadow-[0_10px_20px_rgba(6,182,212,0.15)]">
+                        <svg viewBox="0 0 200 200" class="w-full h-full">
+                            <!-- Background Aura -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(6, 182, 212, 0.3)" stroke-width="2" stroke-dasharray="6 4" />
+                            <!-- Body Shadow -->
+                            <ellipse cx="100" cy="175" rx="45" ry="10" fill="rgba(0,0,0,0.1)" />
+                            <path d="M 60 140 Q 30 150 40 120" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="round" />
+                            <path d="M 60 140 Q 30 150 40 120" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" />
+                            <!-- Blue Body (Round Cute Monster) -->
+                            <circle cx="100" cy="115" r="55" fill="#3b82f6" />
+                            <ellipse cx="100" cy="100" rx="55" ry="45" fill="#2563eb" />
+                            <circle cx="100" cy="110" r="52" fill="#3b82f6" />
+                            <!-- Cute Ears/Horns -->
+                            <path d="M 60 70 Q 50 40 75 55" fill="#2563eb" stroke="#1d4ed8" stroke-width="3" />
+                            <path d="M 140 70 Q 150 40 125 55" fill="#2563eb" stroke="#1d4ed8" stroke-width="3" />
+                            <!-- Face/Tuxedo Vest -->
+                            <path d="M 80 130 L 100 160 L 120 130 Z" fill="#ffffff" />
+                            <!-- Tuxedo Jacket sides -->
+                            <path d="M 60 120 Q 80 125 80 150 L 55 145 Z" fill="#1e293b" />
+                            <path d="M 140 120 Q 120 125 120 150 L 145 145 Z" fill="#1e293b" />
+                            <!-- Red Bow Tie -->
+                            <path d="M 88 127 L 100 132 L 112 127 L 108 137 L 112 142 L 100 137 L 88 142 L 92 137 Z" fill="#ef4444" />
+                            <circle cx="100" cy="134" r="4" fill="#991b1b" />
+                            <!-- Cool Agent Sunglasses -->
+                            <!-- Left Frame -->
+                            <path d="M 55 85 Q 75 80 95 90 Q 95 105 75 108 Q 55 105 55 85 Z" fill="#111827" stroke="#94a3b8" stroke-width="2" />
+                            <path d="M 60 90 L 75 103" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                            <!-- Right Frame -->
+                            <path d="M 105 90 Q 125 80 145 85 Q 145 105 125 108 Q 105 105 105 90 Z" fill="#111827" stroke="#94a3b8" stroke-width="2" />
+                            <path d="M 110 90 L 125 103" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                            <!-- Glasses Bridge -->
+                            <rect x="92" y="86" width="16" height="5" rx="2" fill="#111827" />
+                            <!-- Friendly Mouth -->
+                            <path d="M 90 115 Q 100 125 110 115" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+                            <!-- Hand holding math paper -->
+                            <rect x="125" y="105" width="30" height="40" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" transform="rotate(15 140 125)" />
+                            <text x="135" y="132" font-family="'Fredoka', sans-serif" font-weight="bold" font-size="14" fill="#ef4444" transform="rotate(15 140 125)">94</text>
+                            <circle cx="123" cy="120" r="7" fill="#3b82f6" />
+                        </svg>
+                    </div>
+
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3">
+                        特務 Boka 的神祕任務
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 max-w-md mb-8 leading-relaxed">
+                        「噢不！我的秘密英語分數與基地密碼被神祕組織藏起來了！特務夥伴，快用你的英語聽力耳朵，協助我闖過六大機密關卡、找回失蹤的成績吧！」
+                    </p>
+
+                    <button onclick="startGame()" class="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-2xl font-extrabold text-lg shadow-xl shadow-cyan-500/20 active:scale-95 transition duration-150 flex items-center gap-3">
+                        <i class="fa-solid fa-play text-white group-hover:scale-110 transition"></i>
+                        <span class="text-white font-bold">開始特務冒險</span>
+                    </button>
+                </div>
+
+                <!-- DYNAMIC LEVEL CONTENT AREA (Replaced by engine) -->
+                <div id="screen-gameplay" class="hidden w-full flex flex-col items-center animate-fade-in">
+                    <!-- Dynamic level content goes here -->
+                </div>
+
+                <!-- LEVEL VICTORY SCREEN -->
+                <div id="screen-victory" class="hidden w-full flex flex-col items-center text-center animate-fade-in">
+                    <div class="relative w-36 h-36 mb-6">
+                        <!-- Hologram Ring -->
+                        <div class="absolute inset-0 bg-cyan-500 rounded-full animate-ping opacity-20"></div>
+                        <!-- Agent Badge SVG -->
+                        <div class="relative w-full h-full flex items-center justify-center bg-white border-4 border-cyan-400 rounded-full shadow-2xl shadow-cyan-400/20">
+                            <svg viewBox="0 0 100 100" class="w-24 h-24">
+                                <polygon points="50,15 80,30 80,70 50,90 20,70 20,30" fill="#f8fafc" stroke="#06b6d4" stroke-width="4"/>
+                                <path d="M 50 25 L 62 50 L 89 54 L 69 72 L 75 98 L 50 84 L 25 98 L 31 72 L 11 54 L 38 50 Z" fill="#eab308" stroke="#facc15" stroke-width="1" />
+                                <circle cx="50" cy="56" r="10" fill="#22d3ee" />
+                                <text x="50" y="60" font-family="'Fredoka', sans-serif" font-weight="extrabold" font-size="12" fill="#0f172a" text-anchor="middle">94</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-emerald-600 mb-2">
+                        任務大成功！
+                    </h2>
+                    <p class="text-emerald-600 font-bold mb-4 text-sm tracking-widest uppercase">恭喜晉升為「終極解密特務總長」</p>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 mb-8 max-w-sm w-full grid grid-cols-2 gap-4 shadow-sm">
+                        <div class="text-center">
+                            <span class="text-xs text-slate-500 block mb-1">任務總積分</span>
+                            <span class="text-3xl font-black text-cyan-600" id="final-score">0</span>
+                        </div>
+                        <div class="text-center border-l border-slate-100">
+                            <span class="text-xs text-slate-500 block mb-1">獲得秘密勳章</span>
+                            <span class="text-sm font-bold text-amber-500 block mt-1">🥇 終極聽力王</span>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-slate-600 max-w-sm mb-8 leading-relaxed">
+                        「太神奇了！多虧有你的極致聽力耳朵，我不僅順利找到了 <strong>Class 508</strong> 基地、搭上 <strong>101號公車</strong>，還拿回了我的 <strong>94分</strong> 考卷！你就是我的黃金夥伴！」
+                    </p>
+
+                    <button onclick="resetGame()" class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 rounded-2xl font-extrabold text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right text-white"></i>
+                        <span class="text-white">再次接受挑戰</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast / Dialogue Notification Box -->
+            <div id="dialogue-toast" class="hidden absolute bottom-6 left-6 right-6 p-4 rounded-2xl flex items-center gap-3 border shadow-2xl animate-fade-in z-20">
+                <div id="toast-icon-bg" class="p-2 rounded-xl flex items-center justify-center text-slate-900">
+                    <i id="toast-icon" class="fa-solid"></i>
+                </div>
+                <div class="flex-grow">
+                    <p id="toast-title" class="text-xs font-extrabold uppercase tracking-widest"></p>
+                    <p id="toast-message" class="text-sm font-medium text-slate-600"></p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 border-t border-slate-200 text-xs text-slate-400">
+        <p>© 2026 Boka 英語探險基地 | 數位雙語聽力教具（擴充加長版）</p>
+    </footer>
+
+    <script>
+        // --- Web Audio API Synth Engine ---
+        let audioCtx = null;
+        let sfxEnabled = true;
+        let ttsEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Generate dynamic sound effects using Web Audio API
+        function playSound(type) {
+            if (!sfxEnabled) return;
+            initAudio();
+
+            try {
+                const now = audioCtx.currentTime;
+                
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } 
+                else if (type === 'correct') {
+                    const osc1 = audioCtx.createOscillator();
+                    const osc2 = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc1.frequency.setValueAtTime(523.25, now); // C5
+                    osc1.frequency.setValueAtTime(659.25, now + 0.12); // E5
+                    
+                    osc2.frequency.setValueAtTime(1046.50, now + 0.12); // C6
+                    
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    
+                    osc1.start(now);
+                    osc2.start(now + 0.12);
+                    osc1.stop(now + 0.4);
+                    osc2.stop(now + 0.4);
+                } 
+                else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(150, now + 0.1);
+                    
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+                else if (type === 'victory') {
+                    const melody = [261.63, 329.63, 392.00, 523.25, 659.25, 1047.00]; 
+                    const duration = 0.12;
+                    
+                    melody.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        
+                        osc.frequency.setValueAtTime(freq, now + idx * duration);
+                        gain.gain.setValueAtTime(0.07, now + idx * duration);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * duration + 0.3);
+                        
+                        osc.start(now + idx * duration);
+                        osc.stop(now + idx * duration + 0.3);
+                    });
+                }
+            } catch (err) {
+                console.error("Web Audio API error: ", err);
+            }
+        }
+
+        // --- Toggle control logic ---
+        function toggleSpeech() {
+            ttsEnabled = !ttsEnabled;
+            const icon = document.getElementById('tts-icon');
+            if (ttsEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-cyan-600';
+                showToast('語音啟用', '英語聽力朗讀語音已開啟！', 'success');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                showToast('語音已關閉', '已停用背景聽力，請手動注意！', 'warning');
+            }
+            playSound('click');
+        }
+
+        function toggleSfx() {
+            sfxEnabled = !sfxEnabled;
+            const icon = document.getElementById('sfx-icon');
+            if (sfxEnabled) {
+                icon.className = 'fa-solid fa-bell text-emerald-600';
+                showToast('音效開啟', '遊戲互動音效已開啟！', 'success');
+            } else {
+                icon.className = 'fa-solid fa-bell-slash text-slate-400';
+            }
+            playSound('click');
+        }
+
+        // --- 6-LEVEL GAME DATABASE ---
+        const gameQuestions = [
+            {
+                id: 1,
+                title: "尋找秘密基地大門",
+                instruction: "請聽英文指示，點選正確的教室門號進入基地！",
+                audioText: "I'm in Class 508.",
+                type: "door",
+                options: ["Class 50", "Class 508", "Class 518"],
+                answer: "Class 508"
+            },
+            {
+                id: 2,
+                title: "尋找秘密特務公車",
+                instruction: "聽一聽，我們該搭上哪一輛公車前去跟 Boka 會合？",
+                audioText: "Take Bus 101 to the park.",
+                type: "choice",
+                options: ["Bus 110", "Bus 100", "Bus 101", "Bus 111"],
+                answer: "Bus 101"
+            },
+            {
+                id: 3,
+                title: "解鎖秘密特務代號",
+                instruction: "請聽聽力語音，選擇 Boka 特務的專屬身分數字！",
+                audioText: "My agent code is seven hundred and three.",
+                type: "choice",
+                options: ["Code 73", "Code 730", "Code 703", "Code 307"],
+                answer: "Code 703"
+            },
+            {
+                id: 4,
+                title: "特務考卷分數解碼",
+                instruction: "Boka 特務在考卷上得到了幾分？請聽語音選擇正確答案！",
+                audioText: "I got a ninety-four on my test.",
+                type: "choice",
+                options: ["19", "94", "49", "90"],
+                answer: "94"
+            },
+            {
+                id: 5,
+                title: "重組公車即時通報",
+                instruction: "請聽英文單字發音，點選字卡重組出最正確的通報句子！",
+                audioText: "Bus 101 is here.",
+                type: "puzzle",
+                correctSentence: ["Bus", "101", "is", "here."]
+            },
+            {
+                id: 6,
+                title: "重組特務機密宣言",
+                instruction: "終極大挑戰！請聽聽力語音，重組出 Boka 守護的完美成績單！",
+                audioText: "I got a 94 on my test.",
+                type: "puzzle",
+                correctSentence: ["I", "got", "a", "94", "on", "my", "test."]
+            }
+        ];
+
+        // --- GAME SYSTEM STATE ---
+        let currentLevelIndex = 0; // 0 to 5
+        let gameScore = 0;
+        
+        // Puzzle active status
+        let scrambledWords = [];
+        let userAssembledWords = [];
+
+        // Speech synthesis executor
+        function playCurrentLevelAudio() {
+            playSound('click');
+            if (!ttsEnabled) {
+                showToast('語音已停用', '請點擊右上角「英語語音」開關。', 'warning');
+                return;
+            }
+
+            const currentQuestion = gameQuestions[currentLevelIndex];
+            if (!currentQuestion) return;
+
+            window.speechSynthesis.cancel(); // Stop any running speech
+
+            const utterance = new SpeechSynthesisUtterance(currentQuestion.audioText);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.82; // Friendly, paced speed
+            utterance.pitch = 1.1; // Cuter voice
+
+            // Premium voice detection
+            const voices = window.speechSynthesis.getVoices();
+            const premiumVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+            if (premiumVoice) {
+                utterance.voice = premiumVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Toast Popup Controller
+        let toastTimeout = null;
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('dialogue-toast');
+            const iconBg = document.getElementById('toast-icon-bg');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const msgEl = document.getElementById('toast-message');
+
+            toast.classList.add('hidden');
+            clearTimeout(toastTimeout);
+
+            if (type === 'success') {
+                toast.className = 'absolute bottom-6 left-6 right-6 p-4 rounded-2xl flex items-center gap-3 border shadow-2xl bg-white border-emerald-200 shadow-emerald-500/5 z-20 animate-fade-in';
+                iconBg.className = 'p-2.5 rounded-xl flex items-center justify-center bg-emerald-500 text-white font-bold';
+                icon.className = 'fa-solid fa-shield-halved';
+                titleEl.className = 'text-xs font-extrabold uppercase tracking-widest text-emerald-600';
+            } else if (type === 'wrong') {
+                toast.className = 'absolute bottom-6 left-6 right-6 p-4 rounded-2xl flex items-center gap-3 border shadow-2xl bg-white border-rose-200 shadow-rose-500/5 z-20 animate-fade-in';
+                iconBg.className = 'p-2.5 rounded-xl flex items-center justify-center bg-rose-500 text-white font-bold';
+                icon.className = 'fa-solid fa-triangle-exclamation';
+                titleEl.className = 'text-xs font-extrabold uppercase tracking-widest text-rose-600';
+            } else {
+                toast.className = 'absolute bottom-6 left-6 right-6 p-4 rounded-2xl flex items-center gap-3 border shadow-2xl bg-white border-amber-200 shadow-amber-500/5 z-20 animate-fade-in';
+                iconBg.className = 'p-2.5 rounded-xl flex items-center justify-center bg-amber-500 text-white font-bold';
+                icon.className = 'fa-solid fa-circle-info';
+                titleEl.className = 'text-xs font-extrabold uppercase tracking-widest text-amber-600';
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            toast.classList.remove('hidden');
+
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+
+        // --- START GAME ---
+        function startGame() {
+            playSound('click');
+            currentLevelIndex = 0;
+            gameScore = 0;
+            document.getElementById('score-display').textContent = '0';
+
+            document.getElementById('progress-header').classList.remove('hidden');
+            document.getElementById('screen-intro').classList.add('hidden');
+            document.getElementById('screen-gameplay').classList.remove('hidden');
+
+            renderLevel();
+        }
+
+        function updateProgressDots() {
+            const dotsContainer = document.getElementById('progress-dots');
+            dotsContainer.innerHTML = '';
+            
+            gameQuestions.forEach((q, idx) => {
+                const dot = document.createElement('span');
+                if (idx < currentLevelIndex) {
+                    dot.className = 'w-6 h-6 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/30 flex items-center justify-center text-[10px] text-white font-bold';
+                    dot.innerHTML = '<i class="fa-solid fa-check"></i>';
+                } else if (idx === currentLevelIndex) {
+                    dot.className = 'w-6 h-6 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/40 flex items-center justify-center text-[11px] text-white font-extrabold animate-pulse';
+                    dot.textContent = idx + 1;
+                } else {
+                    dot.className = 'w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-bold border border-slate-300';
+                    dot.textContent = idx + 1;
+                }
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // --- LEVEL RENDERING ENGINE ---
+        function renderLevel() {
+            updateProgressDots();
+            const question = gameQuestions[currentLevelIndex];
+            const gameplayArea = document.getElementById('screen-gameplay');
+            
+            // Clean previous gameplay HTML
+            gameplayArea.innerHTML = '';
+
+            // 1. Build Task Banner Header
+            const banner = document.createElement('div');
+            banner.className = 'mb-6 bg-cyan-50 border border-cyan-100 rounded-2xl p-5 w-full text-center flex flex-col items-center gap-3 shadow-sm';
+            
+            banner.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-1 bg-cyan-500 text-white font-extrabold text-xs rounded-full">任務 ${question.id}</span>
+                    <h3 class="text-base font-bold text-cyan-700">${question.title}</h3>
+                </div>
+                <p class="text-sm text-slate-600">${question.instruction}</p>
+                
+                <!-- Silent Play audio button without leaking English content -->
+                <button onclick="playCurrentLevelAudio()" class="mt-2 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition active:scale-95">
+                    <i class="fa-solid fa-volume-high animate-bounce text-white"></i>
+                    <span>點我播放聽力內容</span>
+                </button>
+            `;
+            gameplayArea.appendChild(banner);
+
+            // 2. Build Interactive Gameplay Elements based on Type
+            if (question.type === 'door') {
+                const doorGrid = document.createElement('div');
+                doorGrid.className = 'grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl mt-4';
+                
+                question.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => checkMultipleChoice(opt);
+                    btn.className = 'group bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-cyan-500 rounded-2xl p-6 transition flex flex-col items-center justify-center gap-4 relative overflow-hidden active:scale-95 shadow-sm';
+                    btn.innerHTML = `
+                        <div class="text-5xl text-slate-400 group-hover:text-cyan-500 transition mb-2">
+                            <i class="fa-solid fa-door-closed"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">基地門牌</span>
+                        <span class="text-2xl font-extrabold text-slate-700 group-hover:text-cyan-600 transition">${opt}</span>
+                    `;
+                    doorGrid.appendChild(btn);
+                });
+                gameplayArea.appendChild(doorGrid);
+
+            } else if (question.type === 'choice') {
+                const choiceGrid = document.createElement('div');
+                choiceGrid.className = 'grid grid-cols-2 gap-4 w-full max-w-xl mt-4';
+                
+                const optionPrefixes = ['A', 'B', 'C', 'D'];
+                question.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => checkMultipleChoice(opt);
+                    btn.className = 'group bg-white hover:bg-slate-50 border border-slate-200 hover:border-cyan-500 rounded-2xl p-5 transition flex items-center justify-between active:scale-95 shadow-sm';
+                    btn.innerHTML = `
+                        <span class="text-lg font-bold text-slate-400 group-hover:text-cyan-500">${optionPrefixes[idx]}</span>
+                        <span class="text-2xl font-black text-slate-700 group-hover:text-slate-900">${opt}</span>
+                    `;
+                    choiceGrid.appendChild(btn);
+                });
+                gameplayArea.appendChild(choiceGrid);
+
+            } else if (question.type === 'puzzle') {
+                // Initialize puzzle setup
+                userAssembledWords = [];
+                // Shuffle words logic
+                scrambledWords = [...question.correctSentence].sort(() => Math.random() - 0.5);
+
+                const puzzleContainer = document.createElement('div');
+                puzzleContainer.className = 'w-full max-w-xl flex flex-col items-center';
+
+                // Workspace
+                const ws = document.createElement('div');
+                ws.id = 'puzzle-workspace';
+                ws.className = 'w-full bg-white/90 border-2 border-dashed border-cyan-200 rounded-2xl p-5 min-h-[90px] flex flex-wrap gap-2.5 items-center justify-center mt-2 shadow-inner';
+                puzzleContainer.appendChild(ws);
+
+                // Word Bank
+                const bank = document.createElement('div');
+                bank.id = 'puzzle-bank';
+                bank.className = 'w-full flex flex-wrap gap-3 justify-center mt-6';
+                puzzleContainer.appendChild(bank);
+
+                // Action Buttons
+                const actions = document.createElement('div');
+                actions.className = 'flex gap-4 mt-8';
+                actions.innerHTML = `
+                    <button onclick="resetPuzzle()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-xl text-sm font-semibold border border-slate-200 transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>清除重來</span>
+                    </button>
+                    <button onclick="submitPuzzle()" class="px-7 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-cyan-500/20 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>送出密碼</span>
+                    </button>
+                `;
+                puzzleContainer.appendChild(actions);
+                gameplayArea.appendChild(puzzleContainer);
+
+                // Update contents of workspace and bank
+                renderPuzzleUI();
+            }
+
+            // Play the speech for the newly rendered level automatically
+            setTimeout(() => {
+                playCurrentLevelAudio();
+            }, 300);
+        }
+
+        // --- PUZZLE LAYOUT RENDERER ---
+        function renderPuzzleUI() {
+            const ws = document.getElementById('puzzle-workspace');
+            const bank = document.getElementById('puzzle-bank');
+            if (!ws || !bank) return;
+
+            // Render workspace
+            ws.innerHTML = '';
+            if (userAssembledWords.length === 0) {
+                ws.innerHTML = '<p class="text-slate-400 text-sm select-none">點擊下方字卡來組成句子...</p>';
+            } else {
+                userAssembledWords.forEach((word, idx) => {
+                    const badge = document.createElement('button');
+                    badge.className = 'px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-sm md:text-base rounded-xl transition duration-150 transform hover:-translate-y-0.5 active:translate-y-0 shadow-md shadow-cyan-100';
+                    badge.innerHTML = `${word} <span class="text-[10px] text-cyan-200 ml-1">×</span>`;
+                    badge.onclick = () => deselectPuzzleWord(word, idx);
+                    ws.appendChild(badge);
+                });
+            }
+
+            // Render word bank
+            bank.innerHTML = '';
+            scrambledWords.forEach((word, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'px-5 py-2.5 bg-white hover:bg-cyan-50 hover:border-cyan-400 border border-slate-200 text-slate-700 font-bold text-sm md:text-base rounded-xl transition active:scale-95 shadow-sm';
+                btn.textContent = word;
+                btn.onclick = () => selectPuzzleWord(word, idx);
+                bank.appendChild(btn);
+            });
+        }
+
+        function selectPuzzleWord(word, idx) {
+            playSound('click');
+            userAssembledWords.push(word);
+            scrambledWords.splice(idx, 1);
+            renderPuzzleUI();
+        }
+
+        function deselectPuzzleWord(word, idx) {
+            playSound('click');
+            scrambledWords.push(word);
+            userAssembledWords.splice(idx, 1);
+            renderPuzzleUI();
+        }
+
+        function resetPuzzle() {
+            playSound('click');
+            const question = gameQuestions[currentLevelIndex];
+            userAssembledWords = [];
+            scrambledWords = [...question.correctSentence].sort(() => Math.random() - 0.5);
+            renderPuzzleUI();
+            showToast('已重設', '字卡已完全重組，請重新排列。', 'warning');
+        }
+
+        // --- ANSWER VALIDATORS ---
+        function checkMultipleChoice(choice) {
+            playSound('click');
+            const question = gameQuestions[currentLevelIndex];
+
+            if (choice === question.answer) {
+                playSound('correct');
+                gameScore += 100;
+                document.getElementById('score-display').textContent = gameScore;
+                showToast('答對了！', '解鎖密碼成功，向下一關前進！獲得 100 積分。', 'success');
+                
+                nextLevel();
+            } else {
+                playSound('wrong');
+                showToast('解密失敗！', '訊號不對，這個選項不符合。請重新點播聽力再試一次！', 'wrong');
+            }
+        }
+
+        function submitPuzzle() {
+            playSound('click');
+            const question = gameQuestions[currentLevelIndex];
+            const userString = userAssembledWords.join(' ');
+            const correctString = question.correctSentence.join(' ');
+
+            if (userString === correctString) {
+                playSound('correct');
+                gameScore += 100;
+                document.getElementById('score-display').textContent = gameScore;
+                showToast('語句重組完美成功！', '完全契合語意！獲得 100 積分。', 'success');
+                
+                nextLevel();
+            } else {
+                playSound('wrong');
+                showToast('排序出錯囉！', '單字排列不符合語法，再仔細聽聽看。', 'wrong');
+            }
+        }
+
+        // --- PROGRESSION CONTROLLER ---
+        function nextLevel() {
+            setTimeout(() => {
+                currentLevelIndex++;
+                if (currentLevelIndex < gameQuestions.length) {
+                    renderLevel();
+                } else {
+                    // Game Over - Show Victory Screen
+                    showVictoryScreen();
+                }
+            }, 1800);
+        }
+
+        function showVictoryScreen() {
+            playSound('victory');
+            document.getElementById('progress-header').classList.add('hidden');
+            document.getElementById('screen-gameplay').classList.add('hidden');
+            
+            const victoryScreen = document.getElementById('screen-victory');
+            victoryScreen.classList.remove('hidden');
+            
+            document.getElementById('final-score').textContent = gameScore;
+        }
+
+        function resetGame() {
+            playSound('click');
+            document.getElementById('screen-victory').classList.add('hidden');
+            document.getElementById('screen-intro').classList.remove('hidden');
+            currentLevelIndex = 0;
+            gameScore = 0;
+        }
+
+        // Initialize speech modules
+        window.onload = function() {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = function() {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+        };
+    </script>
+</body>
+</html>
